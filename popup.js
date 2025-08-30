@@ -1,41 +1,61 @@
-document.addEventListener('DOMContentLoaded', function() {
-  const btcInput = document.getElementById('btcAmount');
-  const convertBtn = document.getElementById('convertBtn');
-  const usdAmount = document.getElementById('usdAmount');
-  const jpyAmount = document.getElementById('jpyAmount');
-  const loading = document.getElementById('loading');
-  const results = document.getElementById('results');
+document.addEventListener("DOMContentLoaded", function () {
+  const btcInput = document.getElementById("btcAmount");
+  const convertBtn = document.getElementById("convertBtn");
+  const usdAmount = document.getElementById("usdAmount");
+  const jpyAmount = document.getElementById("jpyAmount");
+  const loading = document.getElementById("loading");
+  const results = document.getElementById("results");
 
-  convertBtn.addEventListener('click', convertBTC);
-  btcInput.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
+  btcInput.value = "0";
+
+  convertBtn.addEventListener("click", convertBTC);
+  btcInput.addEventListener("keypress", function (e) {
+    if (e.key === "Enter") {
       convertBTC();
+    }
+  });
+
+  btcInput.addEventListener("keydown", function (e) {
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      let currentValue = parseFloat(btcInput.value) || 0;
+      currentValue += 0.1;
+      btcInput.value = currentValue.toFixed(1);
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      let currentValue = parseFloat(btcInput.value) || 0;
+      currentValue = Math.max(0, currentValue - 0.1);
+      btcInput.value = currentValue.toFixed(1);
     }
   });
 
   async function convertBTC() {
     const btcValue = parseFloat(btcInput.value);
-    
+
     if (!btcValue || btcValue <= 0) {
-      alert('有効なBTC数量を入力してください');
+      alert("有効なBTC数量を入力してください");
       return;
     }
 
     showLoading(true);
-    
+
     try {
       const btcPriceUSD = await getBTCPriceInUSD();
       const usdToJpyRate = await getUSDToJPYRate();
-      
+
       const totalUSD = btcValue * btcPriceUSD;
       const totalJPY = totalUSD * usdToJpyRate;
-      
-      usdAmount.textContent = `$${totalUSD.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-      jpyAmount.textContent = `¥${Math.round(totalJPY).toLocaleString('ja-JP')}`;
-      
+
+      usdAmount.textContent = `$${totalUSD.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`;
+      jpyAmount.textContent = `¥${Math.round(totalJPY).toLocaleString(
+        "ja-JP"
+      )}`;
     } catch (error) {
-      console.error('Error:', error);
-      alert('価格の取得に失敗しました。しばらく後でお試しください。');
+      console.error("Error:", error);
+      alert("価格の取得に失敗しました。しばらく後でお試しください。");
     } finally {
       showLoading(false);
     }
@@ -44,17 +64,17 @@ document.addEventListener('DOMContentLoaded', function() {
   async function getBTCPriceInUSD() {
     const apis = [
       {
-        url: 'https://api.coindesk.com/v1/bpi/currentprice.json',
-        parse: (data) => parseFloat(data.bpi.USD.rate.replace(/,/g, ''))
+        url: "https://api.coindesk.com/v1/bpi/currentprice.json",
+        parse: (data) => parseFloat(data.bpi.USD.rate.replace(/,/g, "")),
       },
       {
-        url: 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd',
-        parse: (data) => data.bitcoin.usd
+        url: "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
+        parse: (data) => data.bitcoin.usd,
       },
       {
-        url: 'https://api.coinbase.com/v2/exchange-rates?currency=BTC',
-        parse: (data) => parseFloat(data.data.rates.USD)
-      }
+        url: "https://api.coinbase.com/v2/exchange-rates?currency=BTC",
+        parse: (data) => parseFloat(data.data.rates.USD),
+      },
     ];
 
     for (const api of apis) {
@@ -73,20 +93,20 @@ document.addEventListener('DOMContentLoaded', function() {
         continue;
       }
     }
-    
-    throw new Error('All BTC price APIs failed');
+
+    throw new Error("All BTC price APIs failed");
   }
 
   async function getUSDToJPYRate() {
     const apis = [
       {
-        url: 'https://api.exchangerate-api.com/v4/latest/USD',
-        parse: (data) => data.rates.JPY
+        url: "https://api.exchangerate-api.com/v4/latest/USD",
+        parse: (data) => data.rates.JPY,
       },
       {
-        url: 'https://api.fixer.io/latest?base=USD&symbols=JPY&access_key=YOUR_KEY',
-        parse: (data) => data.rates.JPY
-      }
+        url: "https://api.fixer.io/latest?base=USD&symbols=JPY&access_key=YOUR_KEY",
+        parse: (data) => data.rates.JPY,
+      },
     ];
 
     for (const api of apis) {
@@ -105,20 +125,20 @@ document.addEventListener('DOMContentLoaded', function() {
         continue;
       }
     }
-    
+
     // Fallback to a reasonable USD/JPY rate if all APIs fail
-    console.warn('All exchange rate APIs failed, using fallback rate');
+    console.warn("All exchange rate APIs failed, using fallback rate");
     return 150; // Approximate USD to JPY rate as fallback
   }
 
   function showLoading(show) {
     if (show) {
-      loading.style.display = 'block';
-      results.style.display = 'none';
+      loading.style.display = "block";
+      results.style.display = "none";
       convertBtn.disabled = true;
     } else {
-      loading.style.display = 'none';
-      results.style.display = 'block';
+      loading.style.display = "none";
+      results.style.display = "block";
       convertBtn.disabled = false;
     }
   }
