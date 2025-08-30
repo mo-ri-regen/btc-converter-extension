@@ -42,15 +42,73 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   async function getBTCPriceInUSD() {
-    const response = await fetch('https://api.coindesk.com/v1/bpi/currentprice.json');
-    const data = await response.json();
-    return parseFloat(data.bpi.USD.rate.replace(/,/g, ''));
+    const apis = [
+      {
+        url: 'https://api.coindesk.com/v1/bpi/currentprice.json',
+        parse: (data) => parseFloat(data.bpi.USD.rate.replace(/,/g, ''))
+      },
+      {
+        url: 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd',
+        parse: (data) => data.bitcoin.usd
+      },
+      {
+        url: 'https://api.coinbase.com/v2/exchange-rates?currency=BTC',
+        parse: (data) => parseFloat(data.data.rates.USD)
+      }
+    ];
+
+    for (const api of apis) {
+      try {
+        const response = await fetch(api.url);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        const price = api.parse(data);
+        if (price && price > 0) {
+          return price;
+        }
+      } catch (error) {
+        console.warn(`Failed to fetch from ${api.url}:`, error);
+        continue;
+      }
+    }
+    
+    throw new Error('All BTC price APIs failed');
   }
 
   async function getUSDToJPYRate() {
-    const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-    const data = await response.json();
-    return data.rates.JPY;
+    const apis = [
+      {
+        url: 'https://api.exchangerate-api.com/v4/latest/USD',
+        parse: (data) => data.rates.JPY
+      },
+      {
+        url: 'https://api.fixer.io/latest?base=USD&symbols=JPY&access_key=YOUR_KEY',
+        parse: (data) => data.rates.JPY
+      }
+    ];
+
+    for (const api of apis) {
+      try {
+        const response = await fetch(api.url);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        const rate = api.parse(data);
+        if (rate && rate > 0) {
+          return rate;
+        }
+      } catch (error) {
+        console.warn(`Failed to fetch from ${api.url}:`, error);
+        continue;
+      }
+    }
+    
+    // Fallback to a reasonable USD/JPY rate if all APIs fail
+    console.warn('All exchange rate APIs failed, using fallback rate');
+    return 150; // Approximate USD to JPY rate as fallback
   }
 
   function showLoading(show) {
