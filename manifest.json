@@ -3,9 +3,7 @@
   "name": "BTC Price Converter",
   "version": "1.0",
   "description": "BTCを入力してドルと日本円を表示する拡張機能",
-  "permissions": [
-    "activeTab"
-  ],
+  "permissions": ["activeTab"],
   "host_permissions": [
     "https://api.coindesk.com/*",
     "https://api.exchangerate-api.com/*",
